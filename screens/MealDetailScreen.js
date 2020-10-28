@@ -1,12 +1,28 @@
-import React from "react";
+import React, {useCallback, useEffect}from "react";
 import { View, Text, Button, StyleSheet, ScrollView, Image } from "react-native";
 import { MEALS } from "../data/dummy-data";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
 import CustomHeaderButton from "../components/CustomHeaderButton";
+import {useDispatch} from "react-redux";
+import {toggleFavorite} from "../store/actions/mealsAction";
+import { useSelector } from 'react-redux';
 const MealDetailScreen = (props) => {
   // เขียนโค้ดเพิ่ม เพื่อดึงอ็อบเจ๊คเมนูอาหารที่ผู้ใช้เลือกเอาไว้
   const mealId = props.navigation.getParam("mealId");
   const selectedMeal = MEALS.find((meal) => meal.id === mealId);
+  const  currentMealIsFav = useSelector((state) => state.meals.favoriteMeals.some((meal) => meal.id === mealId))
+  const dispatch = useDispatch();
+  const toggleFavoriteHandler = useCallback(() => {
+    dispatch(toggleFavorite(mealId));
+  },[dispatch, mealId])
+
+  useEffect(() => {
+    props.navigation.setParams({togleFav : toggleFavoriteHandler})
+  }, [toggleFavoriteHandler])
+
+  useEffect(() => {
+    props.navigation.setParams({isFav : currentMealIsFav})
+  }, [currentMealIsFav])
   return (
     <View>
       <ScrollView>
@@ -44,20 +60,33 @@ const MealDetailScreen = (props) => {
 };
 
 MealDetailScreen.navigationOptions = (navigationData) => {
-  const mealId = navigationData.navigation.getParam("mealId");
-  // const selectedMeal = MEALS.find((meal) => meal.id === mealId);
-  // console.log("selectedMeal: ", selectedMeal);
+  const MealId = navigationData.navigation.getParam("mealTitle");
+  const toggleFavorite = navigationData.navigation.getParam('togleFav')
+  const isFav = navigationData.navigation.getParam('isFav')
   return {
-    headerTitle: navigationData.navigation.getParam("mealTitle"),
+    headerTitle: MealId,
     headerRight: () => {
-      return (
-        <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
-          <Item
-            title="Fav"
-            iconName="ios-star"
-          />
-        </HeaderButtons>
-      );
+      if(isFav){
+        return (
+          <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
+            <Item
+              title="Fav"
+              iconName="ios-star"
+              onPress={toggleFavorite}
+            />
+          </HeaderButtons>
+        );
+      }else{
+        return (
+          <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
+            <Item
+              title="Fav"
+              iconName="ios-star-outline"
+              onPress={toggleFavorite}
+            />
+          </HeaderButtons>
+        );
+      }
     }
   };
 };
